@@ -1,0 +1,28 @@
+{
+  "name": "Game",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$path": "src/shared",
+      "Packages": {
+        "$path": "Packages"
+      }
+    },
+
+    "ServerScriptService": {
+      "$path": "src/server"
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/client"
+      }
+    },
+    "ServerStorage": {
+      "Packages": {
+        "$path": "ServerPackages"
+      }
+    }
+  }
+}
