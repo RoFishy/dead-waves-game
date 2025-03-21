@@ -43,38 +43,40 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
     RandomChunk.Water.Transparency = 1
     RandomChunk.Sand.Transparency = 1
 
+    -- island spawns
     if RandomChunk:FindFirstChild("Spawns") then
         for _, Spawn in RandomChunk.Spawns:GetChildren() do
             local nothing = math.random(1, 10)
             if nothing < 2 then
+                Spawn.Transparency = 1
                 continue
             end
             Spawn.Transparency = 1
             local RandomSpawn = Spawns[tostring(math.random(1, #Spawns:GetChildren()))]:Clone()
-            local SpawnPartsModel = SpawnParts:FindFirstChild(RandomSpawn.Name)
+            local SpawnPartsModel = SpawnParts:FindFirstChild(RandomSpawn.Name):Clone()
+
+
+            local CopiedRegion = TerrainUtils.copyReg(RandomSpawn)
+            TerrainUtils.pasteReg(CopiedRegion, Spawn)
+
+            RandomSpawn:PivotTo(Spawn.CFrame)
 
             if SpawnPartsModel then
                 SpawnPartsModel:PivotTo(RandomSpawn.SpawnParts.CFrame)
                 SpawnPartsModel.Parent = Spawn
             end
-    
-            -- basically soem sp awns wont be terrain and will be pirate ships or wtv yk so plan for dat too ok
-            if typeof(RandomSpawn) == "Instance" then
-                RandomSpawn:Clone().Parent = Spawn -- ts easy caus jus gotat clone it
-            else
-                local CopiedRegion = TerrainUtils.copyReg(RandomSpawn)
-                TerrainUtils.pasteReg(CopiedRegion, Spawn)
-            end
 
             -- save spawns old  name for caching
             local Name = Instance.new("StringValue")
+            Name.Name = "Name"
             Name.Parent = Spawn
-            Name.Value = Spawn.Name
+            Name.Value = RandomSpawn.Name
 
             -- unique name for caching purposes
             Spawn.Name = HttpService:GenerateGUID(false)
         end
     end
+    -- lobby spawns
     if RandomChunk:FindFirstChild("LobbySpawn") then
         local LobbyPaste = RandomChunk.LobbySpawn
         local LobbySpawn = workspace.LobbySpawn
@@ -89,6 +91,8 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
         LobbyParts:PivotTo(LobbySpawnPart.CFrame)
         LobbyParts.Parent = RandomChunk
     end
+    -- safeplace ONLY (gonna procrastinate it for later ig)
+
 
     -- generate a random name for the chunk that can be referred to later; has to be unique
     local RandomName = HttpService:GenerateGUID(false)

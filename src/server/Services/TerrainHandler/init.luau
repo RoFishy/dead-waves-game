@@ -34,14 +34,15 @@ function TerrainHandler:Start()
         end, function(RandomChunk)
             TerrainHandler:UnloadChunk(RandomChunk)
         end)
+        self:UnloadChunk(CurrentChunk)
     end
     local DeltaTime = os.clock() - StartTime
     print(("Chunk loading complete, took %.2f seconds"):format(DeltaTime))
 end
 
 function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already been generated (not loading new chunks)
-    --TerrainUtil.fillPart(Chunk.Water, Enum.Material.Water)
-    --TerrainUtil.fillPart(Chunk.Sand, Enum.Material.Sand)
+    TerrainUtil.fillPart(Chunk.Water, Enum.Material.Water)
+    TerrainUtil.fillPart(Chunk.Sand, Enum.Material.Sand)
     --print(Chunk.Name)
     --print(self.Cache)
     --print(self.Cache[Chunk.Name])
@@ -51,16 +52,24 @@ function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already
     else 
         TerrainUtil.fillPart(Chunk.Water, Enum.Material.Water)
         TerrainUtil.fillPart(Chunk.Sand, Enum.Material.Sand)
+
+        self.Cache[Chunk.Name] = {}
+        if Chunk:FindFirstChild("Spawns") then 
+            for _, spawn in Chunk.Spawns:GetChildren() do
+                local Name = spawn:FindFirstChildOfClass("StringValue").Value
+                -- cache the spawnParts (if there are any)
+                if spawn:FindFirstChild("NonTerrain") then -- if its just yk a part and shit
+                    continue
+                end
+                self.Cache[Chunk.Name][spawn.Name] = {}
+                --self.Cache[Chunk.Name][spawn.Name]["Terrain"] = TerrainUtil.copyReg(spawn) -- save each spawn for later
+                self.Cache[Chunk.Name][spawn.Name]["Name"] = Name
+            end
+        end
     end
 
     if Chunk:FindFirstChild("Spawns") then 
         for _, spawn in Chunk.Spawns:GetChildren() do
-            for _, obj in spawn:GetDescendants() do -- going through spawn parts and stuff ya know
-                if obj:FindFirstChild("Ignore") then
-                    continue
-                end
-                obj.Transparency = 0
-            end
             if spawn:FindFirstChild("NonTerrain") then -- if its just yk a part and shit
                 continue
             end
@@ -69,9 +78,9 @@ function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already
 
             -- now find the parts and un-cache them
             if SpawnParts:FindFirstChild(self.Cache[Chunk.Name][spawn.Name]["Name"]) then
-                local Clone = SpawnParts:FindFirstChildOfClass(self.Cache[Chunk.Name][spawn.Name]["Name"]):Clone()
+                local Clone = SpawnParts:FindFirstChild(self.Cache[Chunk.Name][spawn.Name]["Name"]):Clone()
                 Clone.Parent = spawn
-                Clone:PivotTo(spawn.SpawnParts.CFrame)
+                Clone:PivotTo(spawn.CFrame)
             end
         end
     end
@@ -95,12 +104,12 @@ function TerrainHandler:UnloadChunk(Chunk : Model)
     if Chunk:FindFirstChild("LobbyParts") then
         Chunk:WaitForChild("LobbyParts"):Destroy()
     end
-    if Chunk:FindFirstChild("Spawns") then 
+    if Chunk:FindFirstChild("Spawns") then
         for _, spawn in Chunk.Spawns:GetChildren() do
             local Name = ""
             -- cache the spawnParts (if there are any)
             if spawn:FindFirstChildOfClass("Model") then
-                Name = spawn:FindFirstChildOfClass("Model"):FindFirstChild("Name").Value
+                Name = spawn:WaitForChild("Name").Value
                 spawn:FindFirstChildOfClass("Model"):Destroy()
             end
             if spawn:FindFirstChild("NonTerrain") then -- if its just yk a part and shit
