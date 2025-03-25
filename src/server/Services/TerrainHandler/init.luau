@@ -50,9 +50,6 @@ function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already
         local Terrain = self.Cache[Chunk.Name]["TerrainArea"]
         TerrainUtil.pasteReg(Terrain, Chunk.TerrainArea)
     else 
-        TerrainUtil.fillPart(Chunk.Water, Enum.Material.Water)
-        TerrainUtil.fillPart(Chunk.Sand, Enum.Material.Sand)
-
         self.Cache[Chunk.Name] = {}
         if Chunk:FindFirstChild("Spawns") then 
             for _, spawn in Chunk.Spawns:GetChildren() do

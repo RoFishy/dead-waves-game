@@ -1,0 +1,19 @@
+{
+    "ClassName": "Folder",
+    "Children": [
+        {
+            "Name": "Items",
+            "ClassName": "Folder",
+            "Children": [
+                {
+                    "Name": "GetNetworkOwner",
+                    "ClassName": "RemoteFunction"
+                },
+                {
+                    "Name": "HandleItem",
+                    "ClassName": "RemoteEvent"
+                }
+            ]
+        }
+    ]
+}
