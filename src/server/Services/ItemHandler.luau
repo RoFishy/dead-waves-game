@@ -7,6 +7,11 @@ local Items = Remotes.Items
 
 local HandleItem = Items.HandleItem
 local GetNetworkOwner = Items.GetNetworkOwner
+local WeldItem = Items.WeldItem
+
+-- // objects
+local Raft = workspace.Raft
+local CollisionBase = Raft.CollisionBase
 
 -- // ItemHandler
 local ItemHandler = {}
@@ -25,6 +30,27 @@ function ItemHandler:Start()
     GetNetworkOwner.OnServerInvoke = function(_, Part : BasePart)
         return Part:GetNetworkOwner()
     end
+    WeldItem.OnServerEvent:Connect(function(_, item, weld : boolean?)
+        if item then
+            if weld then
+                local weldConstraint : WeldConstraint = Instance.new("WeldConstraint")
+                weldConstraint.Parent = CollisionBase
+                weldConstraint.Part0 = CollisionBase
+                weldConstraint.Part1 = item.PrimaryPart
+                weldConstraint.Name = item.Name
+                for _, Part : Part in item:GetDescendants() do
+                    if not Part:IsA("BasePart") then
+                        continue
+                    end
+                    Part.CollisionGroup = "Default"
+                end
+            else 
+                if CollisionBase:FindFirstChild(item.Name) then
+                    CollisionBase:FindFirstChild(item.Name):Destroy()
+                end
+            end
+        end
+    end)
 end
 
 return ItemHandler

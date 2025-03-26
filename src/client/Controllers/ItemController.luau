@@ -1,8 +1,13 @@
 -- // Services
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+
+-- // Utils
+local Utils = ReplicatedStorage:WaitForChild("Modules").Utils
+local ActionManager = require(Utils.ActionManager)
+
+local Bindings = {}
 
 -- // Player
 local LocalPlayer = Players.LocalPlayer
@@ -13,11 +18,15 @@ local Camera = workspace.CurrentCamera
 local Objects = ReplicatedStorage.Objects
 local Highlight = Objects.HoverHighlight
 
+local Raft : Model = workspace:WaitForChild("Raft")
+local CollisionBase = Raft:WaitForChild("CollisionBase")
+
 -- // Remotes
 local Remotes = ReplicatedStorage.Remotes
 local ItemRemotes = Remotes.Items
 local GetNetworkOwner : RemoteFunction = ItemRemotes.GetNetworkOwner
 local HandleItem : RemoteEvent = ItemRemotes.HandleItem
+local WeldItem : RemoteEvent = ItemRemotes.WeldItem
 
 -- // Constants
 local RANGE = 12
@@ -58,21 +67,66 @@ function ItemController:Start()
                 if not Carrying and Part.Parent ~= CurrentTarget then
                     CurrentTarget = Part.Parent
                     Highlight.Parent = CurrentTarget
+                    if not table.find(Bindings, "Drag") then
+                        ActionManager.bindAction("Drag", function(action, inputState)
+                            self:ActionHandler(action, inputState)
+                        end, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX, 1)
+                        table.insert(Bindings, "Drag")
+                    end
+                    if CollisionBase:FindFirstChild(CurrentTarget.Name) then
+                        self:UnbindAction("Weld")
+                        self:UnbindAction("Drag")
+                        if not table.find(Bindings, "Unweld") then
+                            ActionManager.bindAction("Unweld", function(action, inputState)
+                                self:ActionHandler(action, inputState)
+                            end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
+                            table.insert(Bindings, "Unweld")
+                        end
+                    end
+                else
+                    if CollisionBase:FindFirstChild(CurrentTarget.Name) then
+                        self:UnbindAction("Weld")
+                        self:UnbindAction("Drag")
+                        if not table.find(Bindings, "Unweld") then
+                            table.insert(Bindings, "Unweld")
+                            ActionManager.bindAction("Unweld", function(action, inputState)
+                                self:ActionHandler(action, inputState)
+                            end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
+                        end
+                    end
                 end
             else
                 if CurrentTarget ~= nil and not Carrying then
                     CurrentTarget = nil
                     Highlight.Parent = nil
+                    self:UnbindAction("Drag")
+                    self:UnbindAction("Unweld")
                 end
+            end
+            
+        else
+            if CurrentTarget ~= nil and not Carrying then
+                CurrentTarget = nil
+                Highlight.Parent = nil
+                self:UnbindAction("Drag")
+                self:UnbindAction("Weld")
+                self:UnbindAction("Unweld")
             end
         end
         -- if something happens to current target (ex: plr picks up)
         if CurrentTarget == nil and Carrying then
             Carrying = false
+            self:UnbindAction("Weld")
+            self:UnbindAction("Unweld")
+            self:UnbindAction("Drag")
         end
 
         -- carry obj
+
         if Carrying and CurrentTarget ~= nil then
+            if CollisionBase:FindFirstChild(CurrentTarget.Name) then
+                return
+            end
             TargetPos = Camera.CFrame.Position + (Camera.CFrame.LookVector * CARRY_DISTANCE)
 
             local CurrentCFrame = CurrentTarget.PrimaryPart.CFrame
@@ -86,32 +140,51 @@ function ItemController:Start()
                 Highlight.Parent = nil
                 CurrentTarget = nil
             end
+
+            -- // weldings
+            local nearbyParts = workspace:GetPartBoundsInRadius(CurrentTarget.PrimaryPart.Position, 1.5)
+            local ViableParts = {}
+            for _, Part in nearbyParts do
+                if Part:IsDescendantOf(Raft) then
+                    if not table.find(Bindings, "Weld") then
+                        ActionManager.bindAction("Weld", function(action, inputState)
+                            self:ActionHandler(action, inputState)
+                        end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
+                        table.insert(Bindings, "Weld")
+                    end
+                    table.insert(ViableParts, Part.Name)
+                end
+            end
+            if #ViableParts == 0 then
+                self:UnbindAction("Weld")
+            end
         end
-
     end)
+end
 
-    UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+function ItemController:UnbindAction(Name)
+    ActionManager.unbindAction(Name)
+    table.remove(Bindings, table.find(Bindings, Name))
+end
+
+function ItemController:ActionHandler(action, inputState)
+    if inputState == Enum.UserInputState.Begin then
+        if action == "Drag" then
             self:PickupItem()
+        elseif action == "Weld" then
+            WeldItem:FireServer(CurrentTarget, true)
+            Carrying = false
+            CurrentTarget = nil
+            self:UnbindAction("Drag")
+        elseif action == "Unweld" then
+            WeldItem:FireServer(CurrentTarget, false)
+            self:UnbindAction("Unweld")
         end
-    end)
-    UserInputService.InputEnded:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and Carrying then
-            self:DropItem(true)
-        end
-    end)
-    UserInputService.TouchStarted:Connect(function(_, gameProcessedEvent)
-        if gameProcessedEvent then return end
-        self:PickupItem()
-    end)
-    UserInputService.TouchEnded:Connect(function(_, gameProcessedEvent)
-        if gameProcessedEvent then return end
+    elseif inputState == Enum.UserInputState.End then
         if Carrying then
             self:DropItem(true)
         end
-    end)
+    end
 end
 
 function ItemController:PickupItem()
