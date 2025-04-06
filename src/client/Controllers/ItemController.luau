@@ -16,7 +16,8 @@ local Camera = workspace.CurrentCamera
 
 -- // Objects
 local Objects = ReplicatedStorage.Objects
-local Highlight = Objects.HoverHighlight
+local Highlight : Highlight = Objects.HoverHighlight
+local ItemGui : BillboardGui = Objects.ItemGui
 
 local Raft : Model = workspace:WaitForChild("Raft")
 local CollisionBase = Raft:WaitForChild("CollisionBase")
@@ -54,6 +55,14 @@ local function RegisterItemCollision(Item : Model, Group : string)
     end
 end
 
+local function ClearGui()
+    for _, v in ItemGui:GetChildren() do
+        if v.Name == "Detail" then
+            v:Destroy()
+        end
+    end
+end
+
 -- // Controller
 local ItemController = {}
 
@@ -61,12 +70,35 @@ function ItemController:Start()
     RunService.RenderStepped:Connect(function() 
         local Raycast : RaycastResult = workspace:Raycast(Camera.CFrame.Position, Camera.CFrame.LookVector * RANGE, RAY_PARAMS)
 
+        if CurrentTarget then
+            CurrentTarget.Destroying:Connect(function()
+                CurrentTarget = nil
+            end)
+        end
+
         if Raycast then
             local Part = Raycast.Instance
             if Part and Part.Parent:IsA("Model") and Part.Parent:GetAttribute("Item") then
                 if not Carrying and Part.Parent ~= CurrentTarget then
                     CurrentTarget = Part.Parent
                     Highlight.Parent = CurrentTarget
+                    ItemGui.Parent = CurrentTarget.PrimaryPart
+
+                    local ItemConfig = CurrentTarget:FindFirstChild("Config")
+                    assert(ItemConfig, "Item has no config")
+
+                    ItemGui.Title.Text = ItemConfig.Title.Value
+                    for _, Config in ItemConfig.Details:GetChildren() do
+                        if not Config:IsA("StringValue") then
+                            continue
+                        end
+                        local Detail = ItemGui.DetailTemplate:Clone()
+                        Detail.Parent = ItemGui
+                        Detail.Text = Config.Value
+                        Detail.Visible = true
+                        Detail.Name = "Detail"
+                    end
+
                     if not table.find(Bindings, "Drag") then
                         ActionManager.bindAction("Drag", function(action, inputState)
                             self:ActionHandler(action, inputState)
@@ -99,6 +131,8 @@ function ItemController:Start()
                 if CurrentTarget ~= nil and not Carrying then
                     CurrentTarget = nil
                     Highlight.Parent = nil
+                    ItemGui.Parent = nil
+                    ClearGui()
                     self:UnbindAction("Drag")
                     self:UnbindAction("Unweld")
                 end
@@ -108,6 +142,8 @@ function ItemController:Start()
             if CurrentTarget ~= nil and not Carrying then
                 CurrentTarget = nil
                 Highlight.Parent = nil
+                ItemGui.Parent = nil
+                ClearGui()
                 self:UnbindAction("Drag")
                 self:UnbindAction("Weld")
                 self:UnbindAction("Unweld")
@@ -138,6 +174,8 @@ function ItemController:Start()
             if (Camera.CFrame.Position - CurrentTarget.PrimaryPart.CFrame.Position).Magnitude > MAX_CARRY_DISTANCE then
                 self:DropItem(false)
                 Highlight.Parent = nil
+                ItemGui.Parent = nil
+                ClearGui()
                 CurrentTarget = nil
             end
 
@@ -172,13 +210,25 @@ function ItemController:ActionHandler(action, inputState)
         if action == "Drag" then
             self:PickupItem()
         elseif action == "Weld" then
+            RegisterItemCollision(CurrentTarget, "Default")
             WeldItem:FireServer(CurrentTarget, true)
             Carrying = false
             CurrentTarget = nil
             self:UnbindAction("Drag")
+            table.remove(Bindings, table.find(Bindings, "Drag"))
         elseif action == "Unweld" then
             WeldItem:FireServer(CurrentTarget, false)
             self:UnbindAction("Unweld")
+            table.remove(Bindings, table.find(Bindings, "Unweld"))
+            ActionManager.bindAction("Weld", function(_action, _inputState)
+                self:ActionHandler(_action, _inputState)
+            end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
+            ActionManager.bindAction("Drag", function(_action, _inputState) 
+                self:ActionHandler(_action, _inputState)
+            end, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX, 1)
+            table.insert(Bindings, "Weld")
+            table.insert(Bindings, "Drag")
+            Carrying = false
         end
     elseif inputState == Enum.UserInputState.End then
         if Carrying then

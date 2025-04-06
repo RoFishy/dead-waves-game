@@ -117,20 +117,6 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
         end
     end)
 
-    -- we migrated to using zones instead of this touched code, itll allow us to expand more
-    --[[
-        RandomChunk.RenderArea.Touched:Connect(function(hit) 
-            if hit.Parent:FindFirstChild("Humanoid") then
-                RenderEnter(RandomChunk)
-            end
-        end)
-        RandomChunk.RenderArea.TouchEnded:Connect(function(hit) 
-            if hit.Parent:FindFirstChild("Humanoid") then
-                RenderLeave(RandomChunk)
-            end
-        end)
-    ]]--
-
     return RandomChunk
 end
 

@@ -34,6 +34,7 @@ function PlayerHandler:Start()
 
         -- leaderstats
         local leaderstats = Instance.new("Folder")
+        leaderstats.Name = "leaderstats"
         leaderstats.Parent = Player
 
         local Cash = Instance.new("IntValue")

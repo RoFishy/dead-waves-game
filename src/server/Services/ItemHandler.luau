@@ -38,13 +38,8 @@ function ItemHandler:Start()
                 weldConstraint.Part0 = CollisionBase
                 weldConstraint.Part1 = item.PrimaryPart
                 weldConstraint.Name = item.Name
-                for _, Part : Part in item:GetDescendants() do
-                    if not Part:IsA("BasePart") then
-                        continue
-                    end
-                    Part.CollisionGroup = "Default"
-                end
-            else 
+                item.PrimaryPart:SetNetworkOwner(nil)
+            else
                 if CollisionBase:FindFirstChild(item.Name) then
                     CollisionBase:FindFirstChild(item.Name):Destroy()
                 end
