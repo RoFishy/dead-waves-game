@@ -23,6 +23,9 @@
       "Packages": {
         "$path": "ServerPackages"
       }
+    },
+    "ReplicatedFirst": {
+      "$path": "src/replicatedFirst"
     }
   }
 }

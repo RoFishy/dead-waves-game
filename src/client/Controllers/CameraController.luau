@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 -- // Player
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Mouse = LocalPlayer:GetMouse()
 
 local Camera = workspace.CurrentCamera
 
@@ -14,6 +15,7 @@ function CameraController.Init()
     LocalPlayer.CameraMaxZoomDistance = 0.5
     Camera.FieldOfView = 100
     Character.Humanoid.CameraOffset = Vector3.new(0, 0, -.8)
+    Mouse.Icon = "rbxasset://11232270592"
 end
 
 function CameraController:Start()

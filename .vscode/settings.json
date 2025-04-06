@@ -2,6 +2,7 @@
     "stylua.targetReleaseVersion": "latest",
     "cSpell.words": [
         "Collidable",
+        "rbxasset",
         "Unweld"
     ]
 }
