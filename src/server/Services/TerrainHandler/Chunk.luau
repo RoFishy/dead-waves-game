@@ -24,7 +24,13 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
     if not PreviousChunk then
         RandomChunk = ReplicatedStorage.Lobby.Lobby
     else
-        RandomChunk = ChunksFolder[tostring(math.random(1, #ChunksFolder:GetChildren()))]:Clone() -- choose a random chunk
+        local RandomNumber = math.random(1, 10)
+        if RandomNumber < 2 then
+            RandomNumber = 2
+        else
+            RandomNumber = math.random(1, #ChunksFolder:GetChildren())
+        end
+        RandomChunk = ChunksFolder[tostring(RandomNumber)]:Clone() -- choose a random chunk
     end
     RandomChunk.Parent = GeneratedChunks
 
@@ -46,11 +52,6 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
     -- island spawns
     if RandomChunk:FindFirstChild("Spawns") then
         for _, Spawn in RandomChunk.Spawns:GetChildren() do
-            local nothing = math.random(1, 10)
-            if nothing < 2 then
-                Spawn.Transparency = 1
-                continue
-            end
             Spawn.Transparency = 1
             local RandomSpawn = Spawns[tostring(math.random(1, #Spawns:GetChildren()))]:Clone()
             local SpawnPartsModel = SpawnParts:FindFirstChild(RandomSpawn.Name):Clone()
@@ -62,7 +63,7 @@ function ChunkUtil:GenerateChunk(PreviousChunk : Model?, LoadMaterials : boolean
             RandomSpawn:PivotTo(Spawn.CFrame)
 
             if SpawnPartsModel then
-                SpawnPartsModel:PivotTo(RandomSpawn.SpawnParts.CFrame)
+                SpawnPartsModel:PivotTo(RandomSpawn.SpawnParts.CFrame - Vector3.new(0, 2, 0))
                 SpawnPartsModel.Parent = Spawn
             end
 

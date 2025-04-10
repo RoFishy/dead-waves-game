@@ -77,7 +77,7 @@ function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already
             if SpawnParts:FindFirstChild(self.Cache[Chunk.Name][spawn.Name]["Name"]) then
                 local Clone = SpawnParts:FindFirstChild(self.Cache[Chunk.Name][spawn.Name]["Name"]):Clone()
                 Clone.Parent = spawn
-                Clone:PivotTo(spawn.CFrame)
+                Clone:PivotTo(spawn.CFrame - Vector3.new(0, 2, 0))
             end
         end
     end

@@ -48,11 +48,14 @@ local Carrying = false
 
 -- // Local Functions
 local function RegisterItemCollision(Item : Model, Group : string)
-    for _, Part in Item:GetDescendants() do
-        if Part:IsA("BasePart") then
-            Part.CollisionGroup = Group
+    if Item and Item:IsA("Model") then
+        for _, Part in Item:GetDescendants() do
+            if Part:IsA("BasePart") then
+                Part.CollisionGroup = Group
+            end
         end
     end
+
 end
 
 local function ClearGui()
