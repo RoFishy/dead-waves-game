@@ -6,8 +6,22 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- // Services
 local TerrainHandler = require(script.Parent.TerrainHandler)
 
+-- // Objects
+local Objects = ReplicatedStorage.Objects
+local BackpackObject = Objects.Backpack
+
 -- // Data
 local PlayerBackpacks = {}
+
+-- // Vars
+local BackpackColors = {
+    BrickColor.new("Brown"),
+    BrickColor.new("Curry"),
+    BrickColor.new("Crimson"),
+    BrickColor.new("Dark Royal blue"),
+    BrickColor.new("Tr. Green"),
+    BrickColor.new("Silver")
+}
 
 -- // Local Functions
 local function SpawnPlayer(Character : Model)
@@ -55,6 +69,22 @@ function PlayerHandler:Start()
         Player.CharacterAdded:Connect(function(Character : Model)
             SpawnPlayer(Character)
             RegisterPlayerCollisions(Character)
+
+            local RandomColor = BackpackColors[math.random(1, #BackpackColors)]
+
+            local Backpack = BackpackObject:Clone()
+            Backpack.Parent = Character
+            Backpack.CFrame = (Character.Torso.CFrame * CFrame.Angles(math.rad(180), 0, 0))
+            Backpack.Position -= -(Backpack.CFrame.LookVector * 0.4)
+            Backpack.Position -= Vector3.new(0, 0.15, 0)
+            Backpack.BrickColor = RandomColor
+
+            table.remove(BackpackColors, table.find(BackpackColors, RandomColor))
+
+            local WeldConstraint = Instance.new("WeldConstraint")
+            WeldConstraint.Parent = Character.Torso
+            WeldConstraint.Part0 = Character.Torso
+            WeldConstraint.Part1 = Backpack
         end)
     end)
     Players.PlayerRemoving:Connect(function(Player : Player) 
