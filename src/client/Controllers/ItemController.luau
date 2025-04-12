@@ -7,12 +7,19 @@ local Players = game:GetService("Players")
 local Utils = ReplicatedStorage:WaitForChild("Modules").Utils
 local ActionManager = require(Utils.ActionManager)
 
-local Bindings = {}
-
 -- // Player
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local Camera = workspace.CurrentCamera
+
+-- // UI
+local HUD = PlayerGui:WaitForChild("HUD")
+local BackpackLabel = HUD.Backpack
+
+-- // Backpack
+local BackpackFolder = ReplicatedStorage:WaitForChild("Backpacks")
+local PlayerBackpack = BackpackFolder[LocalPlayer.Name]
 
 -- // Objects
 local Objects = ReplicatedStorage.Objects
@@ -28,8 +35,15 @@ local ItemRemotes = Remotes.Items
 local GetNetworkOwner : RemoteFunction = ItemRemotes.GetNetworkOwner
 local HandleItem : RemoteEvent = ItemRemotes.HandleItem
 local WeldItem : RemoteEvent = ItemRemotes.WeldItem
+local StoreItem : RemoteEvent = ItemRemotes.StoreItem
+local UnstoreItem : RemoteEvent = ItemRemotes.UnstoreItem
+
+-- // Variables
+local BackpackItems = #PlayerBackpack:GetChildren()
 
 -- // Constants
+local MAX_ITEMS = 10
+
 local RANGE = 12
 local CARRY_DISTANCE = 9
 local MAX_CARRY_DISTANCE = 20
@@ -70,7 +84,10 @@ end
 local ItemController = {}
 
 function ItemController:Start()
-    RunService.RenderStepped:Connect(function() 
+    ActionManager.bindAction("Unstore", function(action, inputState)
+        self:ActionHandler(action, inputState)
+    end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
+    RunService.RenderStepped:Connect(function()
         local Raycast : RaycastResult = workspace:Raycast(Camera.CFrame.Position, Camera.CFrame.LookVector * RANGE, RAY_PARAMS)
 
         if CurrentTarget then
@@ -102,32 +119,30 @@ function ItemController:Start()
                         Detail.Name = "Detail"
                     end
 
-                    if not table.find(Bindings, "Drag") then
-                        ActionManager.bindAction("Drag", function(action, inputState)
-                            self:ActionHandler(action, inputState)
-                        end, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX, 1)
-                        table.insert(Bindings, "Drag")
-                    end
+                    ActionManager.bindAction("Drag", function(action, inputState)
+                        self:ActionHandler(action, inputState)
+                    end, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX, 1)
+                    ActionManager.bindAction("Store", function(action, inputState)
+                        self:ActionHandler(action, inputState)
+                    end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
+                    self:UnbindAction("Unstore")
                     if CollisionBase:FindFirstChild(CurrentTarget.Name) then
                         self:UnbindAction("Weld")
                         self:UnbindAction("Drag")
-                        if not table.find(Bindings, "Unweld") then
-                            ActionManager.bindAction("Unweld", function(action, inputState)
-                                self:ActionHandler(action, inputState)
-                            end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
-                            table.insert(Bindings, "Unweld")
-                        end
+                        self:UnbindAction("Store")
+                        self:UnbindAction("Unstore")
+                        ActionManager.bindAction("Unweld", function(action, inputState)
+                            self:ActionHandler(action, inputState)
+                        end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
                     end
                 else
                     if CollisionBase:FindFirstChild(CurrentTarget.Name) then
                         self:UnbindAction("Weld")
                         self:UnbindAction("Drag")
-                        if not table.find(Bindings, "Unweld") then
-                            table.insert(Bindings, "Unweld")
-                            ActionManager.bindAction("Unweld", function(action, inputState)
-                                self:ActionHandler(action, inputState)
-                            end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
-                        end
+                        self:UnbindAction("Store")
+                        ActionManager.bindAction("Unweld", function(action, inputState)
+                            self:ActionHandler(action, inputState)
+                        end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
                     end
                 end
             else
@@ -138,6 +153,10 @@ function ItemController:Start()
                     ClearGui()
                     self:UnbindAction("Drag")
                     self:UnbindAction("Unweld")
+                    self:UnbindAction("Store")
+                    ActionManager.bindAction("Unstore", function(action, inputState)
+                        self:ActionHandler(action, inputState)
+                    end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
                 end
             end
             
@@ -150,6 +169,10 @@ function ItemController:Start()
                 self:UnbindAction("Drag")
                 self:UnbindAction("Weld")
                 self:UnbindAction("Unweld")
+                self:UnbindAction("Store")
+                ActionManager.bindAction("Unstore", function(action, inputState)
+                    self:ActionHandler(action, inputState)
+                end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
             end
         end
         -- if something happens to current target (ex: plr picks up)
@@ -158,6 +181,10 @@ function ItemController:Start()
             self:UnbindAction("Weld")
             self:UnbindAction("Unweld")
             self:UnbindAction("Drag")
+            self:UnbindAction("Store")
+            ActionManager.bindAction("Unstore", function(action, inputState)
+                self:ActionHandler(action, inputState)
+            end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)        
         end
 
         -- carry obj
@@ -187,12 +214,9 @@ function ItemController:Start()
             local ViableParts = {}
             for _, Part in nearbyParts do
                 if Part:IsDescendantOf(Raft) then
-                    if not table.find(Bindings, "Weld") then
-                        ActionManager.bindAction("Weld", function(action, inputState)
-                            self:ActionHandler(action, inputState)
-                        end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
-                        table.insert(Bindings, "Weld")
-                    end
+                    ActionManager.bindAction("Weld", function(action, inputState)
+                        self:ActionHandler(action, inputState)
+                    end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
                     table.insert(ViableParts, Part.Name)
                 end
             end
@@ -201,11 +225,19 @@ function ItemController:Start()
             end
         end
     end)
+
+    PlayerBackpack.ChildAdded:Connect(function(_)
+        BackpackItems += 1
+        BackpackLabel.Text = `Backpack: {BackpackItems}/{MAX_ITEMS}`
+    end)
+    PlayerBackpack.ChildRemoved:Connect(function(_)
+        BackpackItems -= 1
+        BackpackLabel.Text = `Backpack: {BackpackItems}/{MAX_ITEMS}`
+    end)
 end
 
 function ItemController:UnbindAction(Name)
     ActionManager.unbindAction(Name)
-    table.remove(Bindings, table.find(Bindings, Name))
 end
 
 function ItemController:ActionHandler(action, inputState)
@@ -218,20 +250,27 @@ function ItemController:ActionHandler(action, inputState)
             Carrying = false
             CurrentTarget = nil
             self:UnbindAction("Drag")
-            table.remove(Bindings, table.find(Bindings, "Drag"))
         elseif action == "Unweld" then
             WeldItem:FireServer(CurrentTarget, false)
             self:UnbindAction("Unweld")
-            table.remove(Bindings, table.find(Bindings, "Unweld"))
             ActionManager.bindAction("Weld", function(_action, _inputState)
                 self:ActionHandler(_action, _inputState)
             end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
             ActionManager.bindAction("Drag", function(_action, _inputState) 
                 self:ActionHandler(_action, _inputState)
             end, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonX, 1)
-            table.insert(Bindings, "Weld")
-            table.insert(Bindings, "Drag")
             Carrying = false
+        elseif action == "Store" then
+            if BackpackItems >= MAX_ITEMS then return end
+            self:UnbindAction("Store")
+            ActionManager.bindAction("Unstore", function(_action, _inputState)
+                self:ActionHandler(_action, _inputState)
+            end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
+            Carrying = false
+            StoreItem:FireServer(CurrentTarget)
+            CurrentTarget = nil
+        elseif action == "Unstore" then
+            UnstoreItem:FireServer()
         end
     elseif inputState == Enum.UserInputState.End then
         if Carrying then

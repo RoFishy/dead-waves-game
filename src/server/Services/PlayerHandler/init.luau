@@ -1,9 +1,13 @@
 -- // Roblox Services
 local Players = game:GetService("Players")
 local PhysicsService = game:GetService("PhysicsService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- // Services
 local TerrainHandler = require(script.Parent.TerrainHandler)
+
+-- // Data
+local PlayerBackpacks = {}
 
 -- // Local Functions
 local function SpawnPlayer(Character : Model)
@@ -42,11 +46,24 @@ function PlayerHandler:Start()
         Cash.Parent = leaderstats
         Cash.Value = 20
 
+        PlayerBackpacks[Player] = {}
+
+        local BackpackFolder = Instance.new("Folder")
+        BackpackFolder.Parent = ReplicatedStorage.Backpacks
+        BackpackFolder.Name = Player.Name
+
         Player.CharacterAdded:Connect(function(Character : Model)
             SpawnPlayer(Character)
             RegisterPlayerCollisions(Character)
         end)
     end)
+    Players.PlayerRemoving:Connect(function(Player : Player) 
+        PlayerBackpacks[Player] = nil
+    end)
+end
+
+function PlayerHandler:GetBackpack(Player : Player)
+    return PlayerBackpacks[Player]
 end
 
 return PlayerHandler

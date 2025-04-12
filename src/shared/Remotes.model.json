@@ -16,6 +16,14 @@
                 {
                     "Name": "WeldItem",
                     "ClassName": "RemoteEvent"
+                },
+                {
+                    "Name": "StoreItem",
+                    "ClassName": "RemoteEvent"
+                },
+                {
+                    "Name": "UnstoreItem",
+                    "ClassName": "RemoteEvent"
                 }
             ]
         }
