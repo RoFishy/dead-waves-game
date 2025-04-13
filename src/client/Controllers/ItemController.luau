@@ -3,9 +3,9 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
--- // Utils
-local Utils = ReplicatedStorage:WaitForChild("Modules").Utils
-local ActionManager = require(Utils.ActionManager)
+-- // Modules
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local ActionManager = require(Modules.ActionManager)
 
 -- // Player
 local LocalPlayer = Players.LocalPlayer
