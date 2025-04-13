@@ -21,14 +21,16 @@ local RaftHandler = {}
 function RaftHandler:Start()
     local connection
     connection = RunService.Heartbeat:Connect(function(_)
-        if not Raft then
+        local VehicleSeat = Raft:FindFirstChild("VehicleSeat")
+        if not VehicleSeat then
             connection:Disconnect()
+        else
+            MaxSpeed = VehicleSeat.MaxSpeed
+            local SOUND_MAX_VELOCITY = MaxSpeed * WHEEL_RADIUS
+            local Speed = math.abs(CollisionBase.CFrame.LookVector:Dot(CollisionBase.AssemblyLinearVelocity))
+    
+            MotorSound.PlaybackSpeed = SOUND_MAX_SPEED + (SOUND_MAX_SPEED - SOUND_MIN_SPEED) * math.min(Speed / SOUND_MAX_VELOCITY, 1)
         end
-        MaxSpeed = Raft.VehicleSeat.MaxSpeed
-        local SOUND_MAX_VELOCITY = MaxSpeed * WHEEL_RADIUS
-        local Speed = math.abs(CollisionBase.CFrame.LookVector:Dot(CollisionBase.AssemblyLinearVelocity))
-
-        MotorSound.PlaybackSpeed = SOUND_MAX_SPEED + (SOUND_MAX_SPEED - SOUND_MIN_SPEED) * math.min(Speed / SOUND_MAX_VELOCITY, 1)
     end)
 end
 

@@ -12,15 +12,17 @@ local GeneratedChunks = workspace:WaitForChild("GeneratedChunks")
 
 -- // Settings
 local Settings = {
-    ["DistanceOuter"] = 30,
-    ["DistanceInner"] = 15,
+    ["DistanceOuter"] = 80,
+    ["DistanceInner"] = 50,
+    ["EffectRadius"] = 32, 
+	["EffectRadiusMin"] = 8, 
     ["EdgeDistanceCalculations"] = true,
 	["Texture"] = "rbxassetid://18852900044",
 	["TextureTransparency"] = .25,
 	["BackgroundTransparency"] = 0.95,
 	["TextureColor"] = Color3.fromRGB(115, 248, 255),
 	["BackgroundColor"] = Color3.fromRGB(0, 153, 255),
-	["TextureSize"] = Vector2.new(6, 5.5),
+	["TextureSize"] = Vector2.new(12, 11),
 	["TextureOffset"] = Vector2.new(0, .5),
 	["Brightness"] = 3,
 }

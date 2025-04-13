@@ -24,6 +24,20 @@
                 {
                     "Name": "UnstoreItem",
                     "ClassName": "RemoteEvent"
+                },
+                {
+                    "Name": "EquipItem",
+                    "ClassName": "RemoteEvent"
+                }
+            ]
+        },
+        {
+            "Name": "Interface",
+            "ClassName": "Folder",
+            "Children": [
+                {
+                    "Name": "CashEffect",
+                    "ClassName": "RemoteEvent"
                 }
             ]
         }

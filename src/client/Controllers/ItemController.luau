@@ -37,6 +37,7 @@ local HandleItem : RemoteEvent = ItemRemotes.HandleItem
 local WeldItem : RemoteEvent = ItemRemotes.WeldItem
 local StoreItem : RemoteEvent = ItemRemotes.StoreItem
 local UnstoreItem : RemoteEvent = ItemRemotes.UnstoreItem
+local EquipItem : RemoteEvent = ItemRemotes.EquipItem
 
 -- // Variables
 local BackpackItems = #PlayerBackpack:GetChildren()
@@ -98,7 +99,7 @@ function ItemController:Start()
 
         if Raycast then
             local Part = Raycast.Instance
-            if Part and Part.Parent:IsA("Model") and Part.Parent:GetAttribute("Item") then
+            if Part and Part.Parent:IsA("Model") and Part.Parent:GetAttribute("Item") and Part.Parent ~= LocalPlayer.Character then
                 if not Carrying and Part.Parent ~= CurrentTarget then
                     CurrentTarget = Part.Parent
                     Highlight.Parent = CurrentTarget
@@ -126,11 +127,19 @@ function ItemController:Start()
                         self:ActionHandler(action, inputState)
                     end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
                     self:UnbindAction("Unstore")
+                    if CurrentTarget:IsA("Tool") then
+                        ActionManager.bindAction("Equip", function(_action, _inputState)
+                            self:ActionHandler(_action, _inputState)
+                        end, Enum.KeyCode.E, Enum.KeyCode.ButtonR2, 2)
+                    else
+                        self:UnbindAction("Equip")
+                    end
                     if CollisionBase:FindFirstChild(CurrentTarget.Name) then
                         self:UnbindAction("Weld")
                         self:UnbindAction("Drag")
                         self:UnbindAction("Store")
                         self:UnbindAction("Unstore")
+                        self:UnbindAction("Equip")
                         ActionManager.bindAction("Unweld", function(action, inputState)
                             self:ActionHandler(action, inputState)
                         end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
@@ -140,6 +149,7 @@ function ItemController:Start()
                         self:UnbindAction("Weld")
                         self:UnbindAction("Drag")
                         self:UnbindAction("Store")
+                        self:UnbindAction("Equip")
                         ActionManager.bindAction("Unweld", function(action, inputState)
                             self:ActionHandler(action, inputState)
                         end, Enum.KeyCode.Z, Enum.KeyCode.ButtonY, 2)
@@ -154,6 +164,7 @@ function ItemController:Start()
                     self:UnbindAction("Drag")
                     self:UnbindAction("Unweld")
                     self:UnbindAction("Store")
+                    self:UnbindAction("Equip")
                     ActionManager.bindAction("Unstore", function(action, inputState)
                         self:ActionHandler(action, inputState)
                     end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
@@ -170,6 +181,7 @@ function ItemController:Start()
                 self:UnbindAction("Weld")
                 self:UnbindAction("Unweld")
                 self:UnbindAction("Store")
+                self:UnbindAction("Equip")
                 ActionManager.bindAction("Unstore", function(action, inputState)
                     self:ActionHandler(action, inputState)
                 end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)
@@ -182,6 +194,7 @@ function ItemController:Start()
             self:UnbindAction("Unweld")
             self:UnbindAction("Drag")
             self:UnbindAction("Store")
+            self:UnbindAction("Equip")
             ActionManager.bindAction("Unstore", function(action, inputState)
                 self:ActionHandler(action, inputState)
             end, Enum.KeyCode.F, Enum.KeyCode.ButtonL1, 2)        
@@ -271,6 +284,10 @@ function ItemController:ActionHandler(action, inputState)
             CurrentTarget = nil
         elseif action == "Unstore" then
             UnstoreItem:FireServer()
+        elseif action == "Equip" then
+            EquipItem:FireServer(CurrentTarget)
+            Carrying = false
+            CurrentTarget = nil
         end
     elseif inputState == Enum.UserInputState.End then
         if Carrying then

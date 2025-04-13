@@ -10,6 +10,10 @@ local Janitor = require(Packages.Janitor)
 local Objects = ReplicatedStorage.Objects
 local MoneyBag = Objects.MoneyBag
 
+-- // Utils
+local Utils = script.Parent.Parent.Utils
+local SoundUtils = require(Utils.SoundUtils)
+
 -- // Component
 local SellZone = Component.new({
     Tag = "SellZone",
@@ -28,11 +32,13 @@ function SellZone:Start()
                 if item.Parent.Config:FindFirstChild("Price") then
                     local Price = item.Parent.Config.Price.Value
                     local MoneyBagClone = MoneyBag:Clone()
+
+                    SoundUtils.PlaySound(item.Parent.PrimaryPart.CFrame, "Sell")
     
                     MoneyBagClone.Config.Price.Value = Price
                     MoneyBagClone.Parent = workspace
                     MoneyBagClone:PivotTo(MoneyZone.CFrame)
-    
+
                     item.Parent:Destroy()
                 end
             end

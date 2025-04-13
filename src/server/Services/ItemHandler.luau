@@ -6,6 +6,10 @@ local Modules = ReplicatedStorage.Modules
 local Utils = Modules.Utils
 local Loader = require(Utils.Loader)
 
+-- // Server Utils
+local ServerUtils = script.Parent.Parent.Utils
+local SoundUtils = require(ServerUtils.SoundUtils)
+
 -- // Handlers
 local PlayerHandler = Loader.Get("PlayerHandler")
 
@@ -18,6 +22,7 @@ local GetNetworkOwner = Items.GetNetworkOwner
 local WeldItem = Items.WeldItem
 local StoreItem = Items.StoreItem
 local UnstoreItem = Items.UnstoreItem
+local EquipItem = Items.EquipItem
 
 -- // Constants
 local MAX_ITEMS = 10
@@ -47,6 +52,10 @@ function ItemHandler:Start()
     end
     WeldItem.OnServerEvent:Connect(function(_, item, weld : boolean?)
         if item then
+            task.spawn(function()
+                SoundUtils.PlaySound(item.PrimaryPart.CFrame, "Store")
+            end)
+
             if weld then
                 local weldConstraint : WeldConstraint = Instance.new("WeldConstraint")
                 weldConstraint.Parent = CollisionBase
@@ -65,9 +74,13 @@ function ItemHandler:Start()
         local Backpack = PlayerHandler:GetBackpack(player)
         local BackpackFolder = ReplicatedStorage.Backpacks[player.Name]
         if #Backpack >= MAX_ITEMS then return end -- how the fuck they got more idk tbh
+
+        task.spawn(function()
+            SoundUtils.PlaySound(item.PrimaryPart.CFrame, "Store")
+        end)
+
         item.PrimaryPart:SetNetworkOwner(nil)
         table.insert(Backpack, item.Name)
-
         item.Parent = BackpackFolder
     end)
     UnstoreItem.OnServerEvent:Connect(function(player)
@@ -76,14 +89,24 @@ function ItemHandler:Start()
         if #Backpack == 0 then return end
         local ItemName = Backpack[#Backpack]
         table.remove(Backpack, table.find(Backpack, Backpack[#Backpack]))
+
         
         local Item : Model = BackpackFolder:FindFirstChild(ItemName)
         if Item then
             Item.Parent = workspace
             Item:MoveTo(player.Character.PrimaryPart.CFrame.LookVector * 6 + player.Character.PrimaryPart.CFrame.Position)
         end
-    end)
 
+        task.spawn(function()
+            SoundUtils.PlaySound(Item.PrimaryPart.CFrame, "Store")
+        end)
+    end)
+    EquipItem.OnServerEvent:Connect(function(player, item : Tool)
+        task.spawn(function()
+            SoundUtils.PlaySound(item.PrimaryPart.CFrame, "Store")
+        end)
+        item.Parent = player.Backpack
+    end)
 end
 
 return ItemHandler

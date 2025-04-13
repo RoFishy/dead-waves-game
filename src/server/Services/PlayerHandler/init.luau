@@ -44,6 +44,10 @@ function PlayerHandler.Init()
     PhysicsService:RegisterCollisionGroup("Player")
     PhysicsService:RegisterCollisionGroup("Item")
     PhysicsService:CollisionGroupSetCollidable("Item", "Player", false)
+    
+    local Backpacks = Instance.new("Folder")
+    Backpacks.Name = "Backpacks"
+    Backpacks.Parent = ReplicatedStorage
 end
 
 function PlayerHandler:Start()
