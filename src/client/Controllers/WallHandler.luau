@@ -2,6 +2,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService =game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+-- // Player
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character
 
 -- // Modules
 local Modules = ReplicatedStorage:WaitForChild("Modules")
@@ -67,8 +72,13 @@ function WallHandler:Start()
     TweenValue.Parent = script
 
     TweenService:Create(TweenValue, TweenInfo.new(6, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false), { Value = Vector3.new(-6, 5.5) }):Play()
-
-    RunService.Heartbeat:Connect(function(_)
+    
+    local connection
+    connection = RunService.Heartbeat:Connect(function(_)
+        if not Character then
+            connection:Disconnect()
+            return
+        end
 
         for _, v in self.Parts do
             local offsetX = baseOffsetsX[v.Name]

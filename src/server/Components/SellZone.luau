@@ -14,6 +14,20 @@ local MoneyBag = Objects.MoneyBag
 local Utils = script.Parent.Parent.Utils
 local SoundUtils = require(Utils.SoundUtils)
 
+-- // Private Functions
+local function SellItem(self, item)
+    local Price = item.Config.Price.Value
+    local MoneyBagClone = MoneyBag:Clone()
+
+    SoundUtils.PlaySound(item.PrimaryPart.CFrame, "Sell")
+
+    MoneyBagClone.Config.Price.Value = Price
+    MoneyBagClone.Parent = workspace
+    MoneyBagClone:PivotTo(self.Instance.MoneyZone.CFrame)
+
+    item:Destroy()
+end
+
 -- // Component
 local SellZone = Component.new({
     Tag = "SellZone",
@@ -25,21 +39,15 @@ function SellZone:Construct()
 end
 
 function SellZone:Start()
-    local MoneyZone = self.Instance.MoneyZone
     self._janitor:Add(self.Instance.SellZone.Touched:Connect(function(item)
         if item and item.Parent then
             if item.Parent:FindFirstChild("Config") then
                 if item.Parent.Config:FindFirstChild("Price") then
-                    local Price = item.Parent.Config.Price.Value
-                    local MoneyBagClone = MoneyBag:Clone()
-
-                    SoundUtils.PlaySound(item.Parent.PrimaryPart.CFrame, "Sell")
-    
-                    MoneyBagClone.Config.Price.Value = Price
-                    MoneyBagClone.Parent = workspace
-                    MoneyBagClone:PivotTo(MoneyZone.CFrame)
-
-                    item.Parent:Destroy()
+                    SellItem(self, item.Parent)
+                end
+            elseif item.Parent.Parent:FindFirstChild("Config") then
+                if item.Parent.Parent.Config:FindFirstChild("Price") then
+                    SellItem(self, item.Parent.Parent)
                 end
             end
         end

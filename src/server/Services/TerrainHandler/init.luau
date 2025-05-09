@@ -8,6 +8,9 @@ local SpawnParts = ReplicatedStorage.SpawnParts
 local TerrainUtil = require(script.TerrainUtils)
 local ChunkUtil = require(script.Chunk)
 
+-- // Folders
+local CachedItems = ReplicatedStorage.CachedItems
+
 -- // TerrainHandler
 local TerrainHandler = {}
 
@@ -18,7 +21,6 @@ end
 
 function TerrainHandler:Start()
     -- setup the lobby chunk first ig
-    local StartTime = os.clock()
     local CurrentChunk = ChunkUtil:GenerateChunk(nil, true, function(RandomChunk)
         TerrainHandler:LoadChunk(RandomChunk)
     end, function(RandomChunk)
@@ -30,14 +32,12 @@ function TerrainHandler:Start()
 
     for _ = 1, 50 do
         CurrentChunk = ChunkUtil:GenerateChunk(CurrentChunk, false, function(RandomChunk)
-            TerrainHandler:LoadChunk(RandomChunk)
+            self:LoadChunk(RandomChunk)
         end, function(RandomChunk)
-            TerrainHandler:UnloadChunk(RandomChunk)
+            self:UnloadChunk(RandomChunk)
         end)
         self:UnloadChunk(CurrentChunk)
     end
-    local DeltaTime = os.clock() - StartTime
-    print(("Chunk loading complete, took %.2f seconds"):format(DeltaTime))
 end
 
 function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already been generated (not loading new chunks)
@@ -79,6 +79,16 @@ function TerrainHandler:LoadChunk(Chunk : Model) -- for chunks that have already
                 Clone.Parent = spawn
                 Clone:PivotTo(spawn.CFrame - Vector3.new(0, 2, 0))
             end
+
+            local ItemCacheFolder = CachedItems:FindFirstChild(spawn.Name)
+            if ItemCacheFolder then
+                for _, Item in ItemCacheFolder:GetChildren() do
+                    Item.Parent = workspace
+                    print("Uncached: "..Item.Name)
+                end
+
+                ItemCacheFolder:Destroy()
+            end
         end
     end
     if Chunk:FindFirstChild("LobbySpawn") then
@@ -99,7 +109,7 @@ function TerrainHandler:UnloadChunk(Chunk : Model)
     self.Cache[Chunk.Name]["TerrainArea"] = TerrainUtil.copyReg(Chunk.TerrainArea)
     
     if Chunk:FindFirstChild("LobbyParts") then
-        Chunk:WaitForChild("LobbyParts"):Destroy()
+        Chunk.LobbyParts:Destroy()
     end
     if Chunk:FindFirstChild("Spawns") then
         for _, spawn in Chunk.Spawns:GetChildren() do
@@ -116,6 +126,31 @@ function TerrainHandler:UnloadChunk(Chunk : Model)
             --self.Cache[Chunk.Name][spawn.Name]["Terrain"] = TerrainUtil.copyReg(spawn) -- save each spawn for later
             self.Cache[Chunk.Name][spawn.Name]["Name"] = Name
             TerrainUtil.deleteReg(spawn)
+
+            local ItemCacheFolder = nil
+
+            for _, Item in workspace:GetPartBoundsInBox(spawn.CFrame, spawn.Size + Vector3.new(25, 25, 25)) do
+                --print(Item)
+                if Item.Parent == workspace then
+                    if not ItemCacheFolder then
+                        ItemCacheFolder = Instance.new("Folder")
+                        ItemCacheFolder.Parent = CachedItems
+                        ItemCacheFolder.Name = spawn.Name
+                    end
+                    Item.Parent = ItemCacheFolder
+                    print("Cached: "..Item.Name)
+                elseif Item.Parent.Parent == workspace then
+                    if not ItemCacheFolder then
+                        ItemCacheFolder = Instance.new("Folder")
+                        ItemCacheFolder.Parent = CachedItems
+                        ItemCacheFolder.Name = spawn.Name
+                    end
+                    Item.Parent.Parent = ItemCacheFolder
+                    print("Cached: "..Item.Name)
+                else
+                    continue
+                end
+            end
         end
     end
     TerrainUtil.deleteReg(Chunk.TerrainArea)

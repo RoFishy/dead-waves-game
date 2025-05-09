@@ -54,7 +54,9 @@ end
     Deletes all the terrain in a region. Pass through a region or a part
 ]]--
 function TerrainUtils.deleteReg(reg3:Region3|BasePart)
-	Terrain:FillRegion(typeof(reg3) == "Instance" and TerrainUtils.reg3FromPart(reg3) or reg3, 4, Enum.Material.Air)
+    local region = typeof(reg3) == "Instance" and TerrainUtils.reg3FromPart(reg3) or reg3
+    -- Expand the region to align with the terrain grid
+    region = region:ExpandToGrid(4)
+    Terrain:FillRegion(region, 4, Enum.Material.Air)
 end
-
 return TerrainUtils

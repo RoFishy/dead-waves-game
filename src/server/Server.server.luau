@@ -5,7 +5,6 @@ local StartTime = os.clock()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-
 -- // Utils
 local Utils = ReplicatedStorage.Modules.Utils
 local Loader = require(Utils.Loader)
@@ -14,16 +13,18 @@ local Loader = require(Utils.Loader)
 local Services = ServerScriptService.Services
 local Components = ServerScriptService.Components
 
-print("------[SERVICES]------")
+print("-------[SERVER]-------")
+
+print("-- // Services")
 Loader.Init(Services:GetChildren())
 Loader.Start()
 
-print("-----[COMPONENTS]-----")
+print("-- // Components")
 for _, Module in Components:GetChildren() do
     if not Module:IsA("ModuleScript") then continue end
     require(Module)
     print(`{Module.Name} Initialized`)
 end
 
-local DeltaTime = os.clock() - StartTime
-print(("Server loading complete, took %.2f seconds"):format(DeltaTime))
+local EndTime = os.clock() - StartTime
+print(("Server loading complete, took %.2f seconds"):format(EndTime))
